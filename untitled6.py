@@ -18,7 +18,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 # -------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("dfmonthly_modeling.csv", parse_dates=['Date'])
+    df = pd.read_csv("dfmonthly_modelling.csv", parse_dates=['Date'])
     df = df.rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
     return df
 
