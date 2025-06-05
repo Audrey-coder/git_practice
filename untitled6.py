@@ -61,16 +61,18 @@ num_months = st.slider(
 future = model.make_future_dataframe(periods=num_months, freq='MS')
 
 # Add regressor values for the future dataframe
+df_prophet_indexed = df_prophet.set_index('ds')
+
 for reg in regressors:
     future[reg] = None
-    # Set index once outside loop for performance
-    df_prophet_indexed = df_prophet.set_index('ds')
-    # dates to assign regressor values for
-    known_dates = future.loc[future['ds'].isin(df_prophet['ds']), 'ds']
-    # filter only dates present in df_prophet_indexed.index
-    known_dates = known_dates[known_dates.isin(df_prophet_indexed.index)]
+
+    known_dates = pd.DatetimeIndex(future['ds']).intersection(df_prophet_indexed.index)
+
     future.loc[future['ds'].isin(known_dates), reg] = df_prophet_indexed.loc[known_dates, reg].values
-    future[reg].fillna(df_prophet[reg].iloc[-1], inplace=True)
+
+    # Fill forward the rest
+    future[reg].fillna(method='ffill', inplace=True)
+
 
 # Predict
 forecast = model.predict(future)
