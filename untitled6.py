@@ -21,7 +21,7 @@ from math import sqrt
 # Load your data (make sure path is correct)
 @st.cache_data
 def load_data():
-    return pd.read_csv("dfmonthly_modeling.csv", parse_dates=['Date'])
+    return pd.read_csv("dfmonthly_modelling.csv", parse_dates=['Date'])
 
 df = load_data()
 
