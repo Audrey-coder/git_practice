@@ -60,20 +60,19 @@ num_months = st.slider(
 # Create future dataframe
 future = model.make_future_dataframe(periods=num_months, freq='MS')
 
-# Add regressor values for the future dataframe
 df_prophet_indexed = df_prophet.set_index('ds')
 
-for reg in regressors:
-    future[reg] = None
-    known_dates = pd.DatetimeIndex(future['ds']).intersection(df_prophet_indexed.index)
-    future.loc[future['ds'].isin(known_dates), reg] = df_prophet_indexed.loc[known_dates, reg].values
-
-    # Fill NaNs forward first, then backward if any still remain
-    future[reg].fillna(method='ffill', inplace=True)
-    future[reg].fillna(method='bfill', inplace=True)
-
-    # Optional: fill any remaining NaNs with 0 or mean if needed
-    future[reg].fillna(0, inplace=True)
+for col in regressor_cols:
+    future[col] = np.nan  # Use np.nan instead of None for better numeric handling
+    
+    # Boolean mask for historical dates in future dataframe
+    mask_hist = future['ds'].isin(df_prophet['ds'])
+    
+    # Assign historical regressor values aligned by 'ds'
+    future.loc[mask_hist, col] = df_prophet_indexed.loc[future.loc[mask_hist, 'ds'], col].values
+    
+    # Fill future dates with last known value of regressor
+    future[col].fillna(df_prophet[col].iloc[-1], inplace=True)
 
 # Predict
 forecast = model.predict(future)
