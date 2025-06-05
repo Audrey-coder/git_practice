@@ -16,13 +16,6 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from math import sqrt
 
 # -------------------------
-# MAPE Function
-# -------------------------
-def mean_absolute_percentage_error(y_true, y_pred):
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-# -------------------------
 # Load Data
 # -------------------------
 @st.cache_data
@@ -82,6 +75,13 @@ st.pyplot(fig1)
 st.subheader("🧩 Forecast Components")
 fig2 = model.plot_components(forecast)
 st.pyplot(fig2)
+
+# -------------------------
+# MAPE Function
+# -------------------------
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 # -------------------------
 # Evaluation Metrics
