@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 @st.cache_data
 def load_data():
-    return pd.read_csv("dfmonthly_modeling.csv", parse_dates=['Date'])
+    return pd.read_csv("dfmonthly_modelling.csv", parse_dates=['Date'])
 
 df = load_data()
 df_prophet = df.reset_index().rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
