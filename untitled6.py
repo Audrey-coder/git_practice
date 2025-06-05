@@ -46,7 +46,7 @@ model.fit(df_prophet)
 # **Add slider for forecast period**
 num_future_months = st.slider(
     "Select number of months to forecast:",
-    min_value=12,
+    min_value=0,
     max_value=24,
     value=12,
     step=1,
