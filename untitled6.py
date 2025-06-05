@@ -62,7 +62,7 @@ future = model.make_future_dataframe(periods=num_months, freq='MS')
 
 df_prophet_indexed = df_prophet.set_index('ds')
 
-for col in regressor_cols:
+for col in regressors:
     future[col] = np.nan  # Use np.nan instead of None for better numeric handling
     
     # Boolean mask for historical dates in future dataframe
