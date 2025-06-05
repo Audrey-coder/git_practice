@@ -65,14 +65,15 @@ df_prophet_indexed = df_prophet.set_index('ds')
 
 for reg in regressors:
     future[reg] = None
-
     known_dates = pd.DatetimeIndex(future['ds']).intersection(df_prophet_indexed.index)
-
     future.loc[future['ds'].isin(known_dates), reg] = df_prophet_indexed.loc[known_dates, reg].values
 
-    # Fill forward the rest
+    # Fill NaNs forward first, then backward if any still remain
     future[reg].fillna(method='ffill', inplace=True)
+    future[reg].fillna(method='bfill', inplace=True)
 
+    # Optional: fill any remaining NaNs with 0 or mean if needed
+    future[reg].fillna(0, inplace=True)
 
 # Predict
 forecast = model.predict(future)
