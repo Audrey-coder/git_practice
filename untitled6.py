@@ -25,7 +25,7 @@ def load_data():
 
 df = load_data()
 st.subheader("🔍 Data Preview")
-st.dataframe(df_prophet.head())
+st.dataframe(df.head())
 
 # -------------------------
 # Prophet Model
