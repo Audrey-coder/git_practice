@@ -10,90 +10,52 @@ from math import sqrt
 # Load Data
 # -------------------------
 # Load your data (make sure path is correct)
+import streamlit as st
+from prophet import Prophet
+import pandas as pd
+import matplotlib.pyplot as plt
+
 @st.cache_data
 def load_data():
-    # Adjust path if needed
-    return pd.read_csv("dfmonthly_modelling.csv", parse_dates=True)
-
-st.set_page_config(page_title="Exchange Rate Forecast", layout="centered")
-st.title("📈 Prophet Forecast with Regressors")
+    return pd.read_csv("dfmonthly_modeling.csv", parse_dates=['Date'])
 
 df = load_data()
-st.subheader("🔍 Data Preview")
-st.dataframe(df.head())
+df_prophet = df.reset_index().rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
 
-st.title("📈 Prophet Forecast with All Regressors")
+regressor_cols = [col for col in df_prophet.columns if col not in ['ds', 'y']]
 
-# Select date column (usually a datetime)
-date_col = st.selectbox("Select the Date column", options=df.columns)
-
-# Select target column (exclude date_col)
-possible_targets = [col for col in df.columns if col != date_col]
-target_col = st.selectbox("Select the target column to forecast", options=possible_targets)
-
-# Prepare dataframe for Prophet
-df_prophet = df.rename(columns={date_col: "ds", target_col: "y"})
-
-# Identify regressors (all except ds and y)
-regressors = [col for col in df_prophet.columns if col not in ["ds", "y"]]
-
-# Inform user of regressors used
-st.write(f"Using regressors: {', '.join(regressors)}")
-
-# Initialize Prophet model and add regressors
 model = Prophet()
-for reg in regressors:
-    model.add_regressor(reg)
-
-# Fit model
+for col in regressor_cols:
+    model.add_regressor(col)
 model.fit(df_prophet)
 
-# Slider for forecast months (0 to 24)
-num_months = st.slider(
-    "Months to predict into the future",
+num_future_months = st.slider(
+    "Select number of months to forecast:",
     min_value=0,
     max_value=24,
     value=12,
     step=1,
 )
 
-# Create future dataframe
-future = model.make_future_dataframe(periods=num_months, freq='MS')
+future = model.make_future_dataframe(periods=num_future_months, freq='MS')
 
-df_prophet_indexed = df_prophet.set_index('ds')
-
-for col in regressors:
-    future[col] = np.nan  # Use np.nan instead of None for better numeric handling
-    
-    # Boolean mask for historical dates in future dataframe
-    mask_hist = future['ds'].isin(df_prophet['ds'])
-    
-    # Assign historical regressor values aligned by 'ds'
-    future.loc[mask_hist, col] = df_prophet_indexed.loc[future.loc[mask_hist, 'ds'], col].values
-    
-    # Fill future dates with last known value of regressor
+for col in regressor_cols:
+    future[col] = None
+    mask = future['ds'].isin(df_prophet['ds'])
+    future.loc[mask, col] = df_prophet.set_index('ds').loc[future.loc[mask, 'ds'], col].values
     future[col].fillna(df_prophet[col].iloc[-1], inplace=True)
 
-# Predict
 forecast = model.predict(future)
 
-# Show forecast table for future months only
-st.subheader("📊 Forecast Table")
-if num_months > 0:
-    st.subheader(f"Forecast for next {num_months} months")
-    st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(num_months))
-else:
-    st.info("Select months > 0 to see forecast.")
+st.subheader(f"Forecast for next {num_future_months} months")
+st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(num_future_months))
 
-# Plot forecast
-st.subheader("📉 Forecast Plot")
 fig1 = model.plot(forecast)
 st.pyplot(fig1)
 
-# Plot components
-st.subheader("🧩 Forecast Components")
 fig2 = model.plot_components(forecast)
 st.pyplot(fig2)
+
 
 # -------------------------
 # MAPE Function
