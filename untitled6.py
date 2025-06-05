@@ -18,61 +18,57 @@ from math import sqrt
 # -------------------------
 # Load Data
 # -------------------------
+# Load your data (make sure path is correct)
 @st.cache_data
 def load_data():
-    df = pd.read_csv("dfmonthly_modelling.csv", parse_dates=['Date'])
-    df = df.rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
-    return df
+    return pd.read_csv("dfmonthly_modeling.csv", parse_dates=['Date'])
 
-st.set_page_config(page_title="Exchange Rate Forecast", layout="centered")
-st.title("📈 Prophet Forecast with Regressors")
+df = load_data()
 
-# Load and show data
-df_prophet = load_data()
-st.subheader("🔍 Data Preview")
-st.dataframe(df_prophet.head())
+# Rename columns for Prophet
+df_prophet = df.reset_index().rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
 
-# -------------------------
-# Prophet Model
-# -------------------------
+# Select regressors
 regressor_cols = [col for col in df_prophet.columns if col not in ['ds', 'y']]
+
+# Prophet model with regressors
 model = Prophet()
 for col in regressor_cols:
     model.add_regressor(col)
 
-with st.spinner("Training Prophet model..."):
-    model.fit(df_prophet)
+model.fit(df_prophet)
 
-# -------------------------
-# Forecasting
-# -------------------------
-num_future_months = 12
+# **Add slider for forecast period**
+num_future_months = st.slider(
+    "Select number of months to forecast:",
+    min_value=12,
+    max_value=24,
+    value=12,
+    step=1,
+)
+
+# Create future dataframe
 future = model.make_future_dataframe(periods=num_future_months, freq='MS')
 
-# Fill in future regressor values
+# Add regressor values to future dataframe
 for col in regressor_cols:
     future[col] = None
-    past_mask = future['ds'].isin(df_prophet['ds'])
-    future.loc[past_mask, col] = df_prophet.set_index('ds').loc[future.loc[past_mask, 'ds'], col].values
+    mask = future['ds'].isin(df_prophet['ds'])
+    future.loc[mask, col] = df_prophet.set_index('ds').loc[future.loc[mask, 'ds'], col].values
     future[col].fillna(df_prophet[col].iloc[-1], inplace=True)
 
-# Make predictions
+# Predict
 forecast = model.predict(future)
 
-st.subheader("📊 Forecast Table")
-st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(13))
+# Display results
+st.subheader("Forecast for next {} months".format(num_future_months))
+st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(num_future_months))
 
-# -------------------------
-# Plot Forecast
-# -------------------------
-st.subheader("📉 Forecast Plot")
+# Plot forecast
 fig1 = model.plot(forecast)
 st.pyplot(fig1)
 
-# -------------------------
-# Plot Components
-# -------------------------
-st.subheader("🧩 Forecast Components")
+# Plot components
 fig2 = model.plot_components(forecast)
 st.pyplot(fig2)
 
