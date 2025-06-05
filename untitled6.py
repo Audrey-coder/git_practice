@@ -24,7 +24,12 @@ def load_data():
     return pd.read_csv("dfmonthly_modelling.csv", parse_dates=['Date'])
 
 df = load_data()
+st.subheader("🔍 Data Preview")
+st.dataframe(df_prophet.head())
 
+# -------------------------
+# Prophet Model
+# -------------------------
 # Rename columns for Prophet
 df_prophet = df.reset_index().rename(columns={'Date': 'ds', 'exchange_rate': 'y'})
 
@@ -61,14 +66,17 @@ for col in regressor_cols:
 forecast = model.predict(future)
 
 # Display results
+st.subheader("📊 Forecast Table")
 st.subheader("Forecast for next {} months".format(num_future_months))
 st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(num_future_months))
 
 # Plot forecast
+st.subheader("📉 Forecast Plot")
 fig1 = model.plot(forecast)
 st.pyplot(fig1)
 
 # Plot components
+st.subheader("🧩 Forecast Components")
 fig2 = model.plot_components(forecast)
 st.pyplot(fig2)
 
